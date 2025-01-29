@@ -1,6 +1,7 @@
 ﻿from flask import Flask, render_template, request, redirect, url_for, flash, session
 from models import db, Person, PriceList, Products, Realization, Production, Types, User
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 
 def validate_field(column_name, value):
     """Validate field values based on column types."""
@@ -8,6 +9,13 @@ def validate_field(column_name, value):
         return int(value)
     if column_name in ['name', 'description']:
         return str(value)
+    return value
+
+def sanitize_input(value):
+    """Prevent SQL injection by escaping dangerous characters."""
+    dangerous_chars = ["'", '"', ";", "--", "/*", "*/", "xp_"]
+    for char in dangerous_chars:
+        value = value.replace(char, "")
     return value
 
 def register_routes(app, db):
@@ -164,3 +172,64 @@ def register_routes(app, db):
             columns=columns,
             getattr=getattr
         )
+
+    @app.route('/search', methods=['GET', 'POST'])
+    def search():
+        """Full-text search across tables"""
+        if 'username' not in session:
+            return redirect(url_for('login'))
+
+        results = None
+        query = ""
+
+        if request.method == 'POST':
+            table_name = request.form.get('table')
+            search_field = request.form.get('search_field')
+            search_value = sanitize_input(request.form.get('search_value'))
+
+            models = {
+                'Person': Person,
+                'Products': Products,
+                'Realization': Realization,
+                'Production': Production,
+                'Types': Types,
+                'PriceList': PriceList
+            }
+
+            model = models.get(table_name)
+            if not model:
+                flash("Invalid table selected.", "error")
+                return redirect(url_for('search'))
+
+            try:
+                query = model.query.filter(getattr(model, search_field).like(f"%{search_value}%"))
+                results = query.all()
+            except Exception as e:
+                flash(f"Search error: {e}", "error")
+
+        return render_template('search.html', results=results, query=query, getattr=getattr)
+
+    @app.route('/execute_query', methods=['POST'])
+    def execute_query():
+        """Secure execution of custom queries"""
+        if 'username' not in session:
+            return redirect(url_for('login'))
+
+        allowed_queries = {
+            "count_users": "SELECT COUNT(*) FROM user",
+            "list_products": "SELECT name, price FROM products LIMIT 10"
+        }
+
+        query_key = request.form.get("query_key")
+
+        if query_key not in allowed_queries:
+            flash("Unauthorized query request.", "error")
+            return redirect(url_for("index"))
+
+        try:
+            result = db.session.execute(text(allowed_queries[query_key])).fetchall()
+            return render_template("query_results.html", result=result, getattr=getattr)
+
+        except Exception as e:
+            flash(f"Query execution error: {e}", "error")
+            return redirect(url_for("index"))

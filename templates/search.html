@@ -1,0 +1,43 @@
+﻿{% extends "base.html" %}
+{% block title %}Full-text Search{% endblock %}
+{% block content %}
+    <h2>Full-text Search</h2>
+    <form method="POST">
+        <label for="table">Select Table:</label>
+        <select name="table" required>
+            <option value="Person">Person</option>
+            <option value="Products">Products</option>
+            <option value="PriceList">PriceList</option>
+            <option value="Production">Production</option>
+            <option value="Realization">Realization</option>
+            <option value="Types">Types</option>
+        </select>
+        
+        <label for="search_field">Search Field:</label>
+        <input type="text" name="search_field" required>
+
+        <label for="search_value">Enter Search Value:</label>
+        <input type="text" name="search_value" required>
+
+        <button type="submit">Search</button>
+    </form>
+
+    {% if results %}
+        <h3>Search Results:</h3>
+        <table border="1">
+            <tr>
+                {% for col in results[0].__table__.columns %}
+                    <th>{{ col.name }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in results %}
+                <tr>
+                    {% for col in row.__table__.columns %}
+                        <td>{{ getattr(row, col.name) }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    <a href="{{ url_for('index') }}" class="navigation-btn">Back to Tables</a>
+{% endblock %}
