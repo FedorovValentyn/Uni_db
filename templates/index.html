@@ -1,0 +1,12 @@
+﻿{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+{% block content %}
+    <h1>Database Tables</h1>
+    <ul>
+        {% for table in tables %}
+        <li><a href="{{ url_for('view_table', table_name=table) }}">{{ table }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
