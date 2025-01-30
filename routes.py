@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text, or_, and_
 
 def validate_field(column_name, value):
-    """Validate field values based on column types."""
     if column_name in ['age', 'quantity']:
         return int(value)
     if column_name in ['name', 'description']:
@@ -12,7 +11,6 @@ def validate_field(column_name, value):
     return value
 
 def sanitize_input(value):
-    """Prevent SQL injection by escaping dangerous characters."""
     dangerous_chars = ["'", '"', ";", "--", "/*", "*/", "xp_"]
     for char in dangerous_chars:
         value = value.replace(char, "")
@@ -56,7 +54,6 @@ def register_routes(app, db):
             if existing_user:
                 flash('Username is already taken', 'error')
                 return redirect(url_for('register'))
-            # Use the correct hashing method: 'pbkdf2:sha256'
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             new_user = User(username=username, email=email, password=hashed_password)
             db.session.add(new_user)
@@ -90,7 +87,6 @@ def register_routes(app, db):
 
         if request.method == 'POST':
             if 'delete_id' in request.form:
-                # Handle record deletion
                 delete_id = request.form['delete_id']
                 try:
                     record = model.query.get(delete_id)
@@ -103,7 +99,6 @@ def register_routes(app, db):
                 except Exception as e:
                     flash(f'Error deleting record: {e}', 'error')
             else:
-                # Handle adding a new record
                 data = request.form
                 try:
                     validated_data = {key: validate_field(key, value) for key, value in data.items() if key != 'delete_id'}
@@ -118,7 +113,6 @@ def register_routes(app, db):
         rows = model.query.all()
         columns = [column.name for column in model.__table__.columns]
 
-        # Load related data for foreign keys
         related_data = {}
 
         return render_template(
@@ -175,19 +169,18 @@ def register_routes(app, db):
 
     @app.route('/search', methods=['GET', 'POST'])
     def search():
-        """Розширений пошук по таблицях із підтримкою режимів."""
         if 'username' not in session:
             return redirect(url_for('login'))
 
         results = None
         query_str = ""
-        mode = "normal"  # Тип пошуку (за замовчуванням - нормальний)
+        mode = "normal"
 
         if request.method == 'POST':
             table_name = request.form.get('table')
             search_field = request.form.get('search_field')
             search_value = request.form.get('search_value')
-            mode = request.form.get('search_mode')  # Отримання режиму пошуку
+            mode = request.form.get('search_mode')
 
             models = {'Person': Person, 'Products': Products, 'Realization': Realization, 'Production': Production,
                       'Types': Types, 'PriceList': PriceList}
@@ -201,26 +194,26 @@ def register_routes(app, db):
                 if mode == "normal":
                     query_str = model.query.filter(getattr(model, search_field).like(f"%{search_value}%"))
                 elif mode == "logical_OR":
-                    search_fields = request.form.getlist('search_field')  # Get a list of fields
-                    search_values = request.form.getlist('search_value')  # Get a list of values
+                    search_fields = request.form.getlist('search_field')
+                    search_values = request.form.getlist('search_value')
 
                     conditions = [
                         getattr(model, field).like(f"{value}")
                         for field, value in zip(search_fields, search_values)
                     ]
 
-                    query_str = model.query.filter(or_(*conditions))  # Corrected: use or_ here!!!
+                    query_str = model.query.filter(or_(*conditions))
 
                 elif mode == "logical_AND":
-                    search_fields = request.form.getlist('search_field')  # Отримуємо список полів
-                    search_values = request.form.getlist('search_value')  # Отримуємо список значень
+                    search_fields = request.form.getlist('search_field')
+                    search_values = request.form.getlist('search_value')
 
                     conditions = [
                         getattr(model, field).like(f"%{value}%")
                         for field, value in zip(search_fields, search_values)
                     ]
 
-                    query_str = model.query.filter(and_(*conditions))  # Використовуємо AND між різними полями
+                    query_str = model.query.filter(and_(*conditions))
 
                 elif mode == "extended":
                     fields = [col.name for col in model.__table__.columns]
@@ -232,14 +225,13 @@ def register_routes(app, db):
             except Exception as e:
                 flash(f"Помилка пошуку: {e}", "error")
 
-        stored_procedures = ['update_statistics', 'recalculate_prices', 'archive_old_data']  # Доступні процедури
+        stored_procedures = ['update_statistics', 'recalculate_prices', 'archive_old_data']
         return render_template('search.html', results=results, query=query_str, stored_procedures=stored_procedures,
                                mode=mode, getattr=getattr)
 
 
     @app.route('/execute_procedure', methods=['POST'])
     def execute_procedure():
-        """Обробник виклику збережених процедур з параметрами."""
         if 'username' not in session:
             return redirect(url_for('login'))
 
@@ -248,11 +240,11 @@ def register_routes(app, db):
 
         try:
             with db.session.begin():
-                if param_value:  # Якщо є параметр
+                if param_value:
                     result = db.session.execute(
                         text(f"CALL {proc_name}(:param)"), {"param": param_value}
                     )
-                else:  # Якщо процедура без параметра
+                else:
                     result = db.session.execute(text(f"CALL {proc_name}()"))
 
                 rows = result.fetchall()
@@ -260,7 +252,7 @@ def register_routes(app, db):
 
             return render_template('procedure_results.html', results=rows, columns=columns, getattr=getattr)
         except Exception as e:
-            flash(f'Помилка виконання процедури {proc_name}: {e}', 'error')
+            flash(f'Error of executing procedures {proc_name}: {e}', 'error')
             return redirect(url_for('search'))
 
 

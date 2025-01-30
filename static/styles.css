@@ -1,4 +1,4 @@
-﻿/* Загальний стиль */
+﻿
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -8,14 +8,12 @@ body {
     line-height: 1.6;
 }
 
-/* Заголовки */
 h1 {
     text-align: center;
     margin: 20px 0;
     color: #222;
 }
 
-/* Навігація */
 header {
     padding: 10px 20px;
     text-align: right;
@@ -49,14 +47,12 @@ nav a.btn:hover {
     color: white;
 }
 
-/* Основний контент */
 main {
     max-width: 1200px;
     margin: auto;
     padding: 20px;
 }
 
-/* Таблиця */
 .table-container {
     overflow-x: auto;
 }
@@ -93,7 +89,6 @@ td {
     word-wrap: break-word;
 }
 
-/* Форма */
 form {
     margin: 20px auto;
     padding: 20px;
@@ -150,7 +145,6 @@ button.btn:hover {
     background-color: #0056b3;
 }
 
-/* Flash-повідомлення */
 .flash-messages {
     list-style: none;
     padding: 0;
@@ -177,7 +171,6 @@ button.btn:hover {
     border: 1px solid #f5c6cb;
 }
 
-/* Посилання "Назад" */
 .back-link {
     text-align: center;
     margin: 20px 0;
@@ -197,7 +190,6 @@ button.btn:hover {
     background-color: #0056b3;
 }
 
-/* Дії (кнопки) */
 .delete-btn {
     background-color: #dc3545;
     color: white;
@@ -240,7 +232,6 @@ button.btn:hover {
     background-color: #218838;
 }
 
-/* Адаптивність */
 @media (max-width: 768px) {
     table {
         width: 100%;
@@ -266,7 +257,6 @@ button.btn:hover {
         padding: 8px 10px;
     }
 }
-/* Стиль для списку */
 ul {
     list-style: none;
     padding: 0;
@@ -276,7 +266,6 @@ ul {
     gap: 10px;
 }
 
-/* Стиль для кнопок */
 ul li {
     margin: 0;
 }
@@ -305,10 +294,10 @@ ul li a:hover {
     font-weight: bold;
 }
 td {
-    max-width: 200px; /* Регулюйте за необхідності */
+    max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Додає "..." для довгих текстів */
+    text-overflow: ellipsis;
 }
 th, td {
     text-align: center;
@@ -317,7 +306,7 @@ th, td {
 .actions {
     display: flex;
     gap: 5px;
-    flex-wrap: wrap; /* Дозволяє переносити кнопки на новий рядок при нестачі місця */
+    flex-wrap: wrap;
 }
 .navigation-btn{
     display: inline-block;

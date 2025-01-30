@@ -135,7 +135,6 @@
                 fieldSelect.appendChild(option);
             });
 
-            // Оновлення випадаючих списків в логічному AND та OR
             document.querySelectorAll(".condition-field").forEach(select => {
                 select.innerHTML = fieldSelect.innerHTML;
             });
@@ -193,7 +192,7 @@
         }
 
 
-        updateFields();  // Оновлення списку при завантаженні
+        updateFields();
     </script>
 
 {% endblock %}
