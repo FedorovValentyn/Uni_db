@@ -1,9 +1,9 @@
 ﻿{% extends "base.html" %}
-{% block title %}Повнотекстовий пошук{% endblock %}
+{% block title %}Full-Text Search{% endblock %}
 {% block content %}
-    <h2>Повнотекстовий пошук</h2>
+    <h2>Full-Text Search</h2>
     <form method="POST" id="search-form">
-        <label for="table">Виберіть таблицю:</label>
+        <label for="table">Select Table:</label>
         <select name="table" id="table" required>
             <option value="Person">Person</option>
             <option value="Products">Products</option>
@@ -13,65 +13,65 @@
             <option value="Types">Types</option>
         </select>
 
-        <label for="search_field">Поле для пошуку:</label>
+        <label for="search_field">Search Field:</label>
         <select name="search_field" id="search_field" required></select>
 
-        <label for="search_value">Значення для пошуку:</label>
+        <label for="search_value">Search Value:</label>
         <input type="text" name="search_value" required>
 
-        <label for="search_mode">Режим пошуку:</label>
+        <label for="search_mode">Search Mode:</label>
         <select name="search_mode" id="search_mode">
-            <option value="normal">Звичайний</option>
-            <option value="logical_OR">Logical_OR</option>
-            <option value="logical_AND">Logical_AND</option>
-            <option value="extended">Розширений</option>
+            <option value="normal">Normal</option>
+            <option value="logical_OR">Logical OR</option>
+            <option value="logical_AND">Logical AND</option>
+            <option value="extended">Extended</option>
         </select>
 
         <div id="logical-and-conditions" style="display: none;">
-            <h4>Додаткові умови для AND:</h4>
+            <h4>Additional Conditions for AND:</h4>
             <div id="conditions-container">
                 <div>
                     <select name="search_field" class="condition-field"></select>
-                    <input type="text" name="search_value" placeholder="Введіть значення">
+                    <input type="text" name="search_value" placeholder="Enter Value">
                 </div>
             </div>
-            <button type="button" id="add-condition">Додати умову</button>
+            <button type="button" id="add-condition" class="table-btn">Add Condition</button>
         </div>
 
         <div id="logical-or-conditions" style="display: none;">
-            <h4>Додаткові умови для OR:</h4>
+            <h4>Additional Conditions for OR:</h4>
             <div id="or-conditions-container">
                 <div>
                     <select name="search_field" class="condition-field"></select>
-                    <input type="text" name="search_value" placeholder="Введіть значення">
+                    <input type="text" name="search_value" placeholder="Enter Value">
                 </div>
             </div>
-            <button type="button" id="add-or-condition">Додати умову</button>
+            <button type="button" id="add-or-condition" class="table-btn">Add Condition</button>
         </div>
 
-        <button type="submit", class = 'table-btn'>Шукати</button>
+        <button type="submit" class="table-btn">Search</button>
     </form>
 
     <hr>
 
-    <h3>Виконати збережену процедуру</h3>
+    <h3>Execute Stored Procedure</h3>
     <form method="POST" action="{{ url_for('execute_procedure') }}">
-        <label for="procedure">Оберіть процедуру:</label>
+        <label for="procedure">Select Procedure:</label>
         <select name="procedure" id="procedure" required>
             <option value="average_proc">Average_proc</option>
             <option value="last_days_proc">Last_day_proc</option>
         </select>
 
-        <label for="procedure_param">Параметр:</label>
+        <label for="procedure_param">Parameter:</label>
         <input type="text" name="procedure_param" id="procedure_param">
 
-        <button type="submit" class="table-btn">Виконати</button>
+        <button type="submit" class="table-btn">Execute</button>
     </form>
 
     <hr>
 
     {% if results %}
-        <h3>Результати пошуку:</h3>
+        <h3>Search Results:</h3>
         <table border="1">
             <thead>
                 <tr>
@@ -91,10 +91,10 @@
             </tbody>
         </table>
     {% elif results is not none %}
-        <p>Нічого не знайдено.</p>
+        <p>No results found.</p>
     {% endif %}
 
-    <a href="{{ url_for('index') }}" class="navigation-btn">Назад до таблиць</a>
+    <a href="{{ url_for('index') }}" class="navigation-btn">Back to Tables</a>
 
     <script>
         const tableFields = {

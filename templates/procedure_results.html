@@ -1,8 +1,8 @@
 ﻿{% extends "base.html" %}
-{% block title %}Результати процедури{% endblock %}
+{% block title %}Procedure Results{% endblock %}
 
 {% block content %}
-    <h2>Результати виконання процедури</h2>
+    <h2>Procedure Execution Results</h2>
 
     {% if results %}
         <table border="1">
@@ -24,8 +24,8 @@
             </tbody>
         </table>
     {% else %}
-        <p>Процедура виконана, але результатів немає.</p>
+        <p>The procedure was executed, but there are no results.</p>
     {% endif %}
 
-    <a href="{{ url_for('search') }}" class="navigation-btn">Назад</a>
+    <a href="{{ url_for('search') }}" class="navigation-btn">Back</a>
 {% endblock %}
