@@ -38,12 +38,19 @@
 
     <hr>
 
-    <h3>Збережені процедури</h3>
-    <form method="POST" action="{{ url_for('execute_procedure') }}">
-        <button type="submit" name="procedure" value="update_statistics">Оновити статистику</button>
-        <button type="submit" name="procedure" value="recalculate_prices">Перерахувати ціни</button>
-        <button type="submit" name="procedure" value="archive_old_data">Архівувати старі дані</button>
-    </form>
+    <h3>Виконати збережену процедуру</h3>
+<form method="POST" action="{{ url_for('execute_procedure') }}">
+    <label for="procedure">Оберіть процедуру:</label>
+    <select name="procedure" id="procedure" required>
+        <option value="average_proc">Average_proc</option>
+        <option value="last_days_proc">Last_day_proc</option>
+    </select>
+
+    <label for="procedure_param">Параметр:</label>
+    <input type="text" name="procedure_param" id="procedure_param">
+
+    <button type="submit">Виконати</button>
+</form>
 
     <hr>
 
@@ -78,7 +85,7 @@
             "Person": ["id", "name", "age", "job"],
             "Products": ["id", "prod_name"],
             "PriceList": ["id", "price_list_id_prod", "price_list_id_type", "price_list_price"],
-            "Production": ["production_id", "production_price_list_id", "production_date", "id"],
+            "Production": ["production_id", "production_price_list_id", "production_date", "production_quantity", "id"],
             "Realization": ["id", "realization_name", "realization_surname", "realization_middle_name"],
             "Types": ["id", "type_name"]
         };

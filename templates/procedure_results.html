@@ -1,14 +1,31 @@
 ﻿{% extends "base.html" %}
+{% block title %}Результати процедури{% endblock %}
 
 {% block content %}
-<h2>Результати виконання процедури</h2>
+    <h2>Результати виконання процедури</h2>
 
-{% if success %}
-    <p style="color: green;">Процедура виконана успішно!</p>
-{% else %}
-    <p style="color: red;">Помилка: {{ error_message }}</p>
-{% endif %}
+    {% if results %}
+        <table border="1">
+            <thead>
+                <tr>
+                    {% for column in columns %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                    <tr>
+                        {% for column in columns %}
+                            <td>{{ row[column] }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Процедура виконана, але результатів немає.</p>
+    {% endif %}
 
-<a href="{{ url_for('search') }}">Повернутись до пошуку</a>
-
+    <a href="{{ url_for('search') }}">Назад</a>
 {% endblock %}

@@ -205,19 +205,16 @@ def register_routes(app, db):
                     conditions = [getattr(model, search_field).like({term}) for term in search_terms]
                     query_str = model.query.filter(or_(*conditions))  # Використовуємо OR між словами
                 elif mode == "logical_AND":
-                    search_fields = request.form.getlist('search_fields')  # Список полів
-                    search_values = request.form.getlist('search_values')  # Список значень
-
-                    if len(search_fields) != len(search_values):
-                        flash("Mismatch between fields and values.", "error")
-                        return redirect(url_for('search'))
+                    search_fields = request.form.getlist('search_fields')  # Отримуємо список полів
+                    search_values = request.form.getlist('search_values')  # Отримуємо список значень
 
                     conditions = [
-                        getattr(model, field).like(f"%{sanitize_input(value)}%")
+                        getattr(model, field).like(f"%{value}%")
                         for field, value in zip(search_fields, search_values)
                     ]
 
-                    query_str = model.query.filter(and_(*conditions))  # AND між різними полями
+                    query_str = model.query.filter(and_(*conditions))  # Використовуємо AND між різними полями
+
                 elif mode == "extended":
                     fields = [col.name for col in model.__table__.columns]
                     query_str = model.query.filter(
@@ -233,27 +230,33 @@ def register_routes(app, db):
                                mode=mode, getattr=getattr)
 
 
-    def execute_stored_procedure(proc_name, params=None):
-        """Виконання збереженої процедури."""
-        try:
-            with db.session.begin():
-                result = db.session.execute(text(f"CALL {proc_name}(:params)"), {'params': params}).fetchall()
-            return result
-        except Exception as e:
-            flash(f'Помилка виконання процедури {proc_name}: {e}', 'error')
-            return None
-
-
     @app.route('/execute_procedure', methods=['POST'])
     def execute_procedure():
-        """Обробник виклику збережених процедур."""
+        """Обробник виклику збережених процедур з параметрами."""
         if 'username' not in session:
             return redirect(url_for('login'))
 
-        proc_name = request.form.get('procedure_name')
+        proc_name = request.form.get('procedure')
         param_value = request.form.get('procedure_param')
-        results = execute_stored_procedure(proc_name, param_value)
-        return render_template('procedure_results.html', results=results)
+
+        try:
+            with db.session.begin():
+                if param_value:  # Якщо є параметр
+                    result = db.session.execute(
+                        text(f"CALL {proc_name}(:param)"), {"param": param_value}
+                    )
+                else:  # Якщо процедура без параметра
+                    result = db.session.execute(text(f"CALL {proc_name}()"))
+
+                rows = result.fetchall()
+                columns = result.keys() if rows else []
+
+            return render_template('procedure_results.html', results=rows, columns=columns, getattr=getattr)
+        except Exception as e:
+            flash(f'Помилка виконання процедури {proc_name}: {e}', 'error')
+            return redirect(url_for('search'))
+
+
 
 
 
