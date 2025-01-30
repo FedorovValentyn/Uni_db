@@ -327,4 +327,16 @@ th, td {
     border-radius: 5px;
     text-transform: uppercase;
     font-weight: bold;
+    margin-top: 20px;
+}
+.table-btn{
+    margin-top: 10px;
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #007BFF;
+    color: #fff;
+    border-radius: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 10px;
 }
