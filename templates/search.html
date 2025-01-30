@@ -121,28 +121,29 @@
         }
 
         function addCondition() {
-            const container = document.getElementById("conditions-container");
-            const conditionDiv = document.createElement("div");
-            conditionDiv.classList.add("condition");
+    const container = document.getElementById("conditions-container");
+    const conditionDiv = document.createElement("div");
+    conditionDiv.classList.add("condition");
 
-            const fieldSelect = document.createElement("select");
-            fieldSelect.classList.add("condition-field");
-            tableFields[document.getElementById("table").value].forEach(field => {
-                const option = document.createElement("option");
-                option.value = field;
-                option.textContent = field;
-                fieldSelect.appendChild(option);
-            });
+    const fieldSelect = document.createElement("select");
+    fieldSelect.classList.add("condition-field");
+    fieldSelect.name = "search_field"; // однакове ім'я для поля
+    tableFields[document.getElementById("table").value].forEach(field => {
+        const option = document.createElement("option");
+        option.value = field;
+        option.textContent = field;
+        fieldSelect.appendChild(option);
+    });
 
-            const valueInput = document.createElement("input");
-            valueInput.type = "text";
-            valueInput.name = "condition_values[]";
-            valueInput.placeholder = "Введіть значення";
+    const valueInput = document.createElement("input");
+    valueInput.type = "text";
+    valueInput.name = "search_value"; // однакове ім'я для значення
+    valueInput.placeholder = "Введіть значення";
 
-            conditionDiv.appendChild(fieldSelect);
-            conditionDiv.appendChild(valueInput);
-            container.appendChild(conditionDiv);
-        }
+    conditionDiv.appendChild(fieldSelect);
+    conditionDiv.appendChild(valueInput);
+    container.appendChild(conditionDiv);
+}
 
         updateFields();  // Оновлення списку при завантаженні
     </script>

@@ -205,8 +205,8 @@ def register_routes(app, db):
                     conditions = [getattr(model, search_field).like({term}) for term in search_terms]
                     query_str = model.query.filter(or_(*conditions))  # Використовуємо OR між словами
                 elif mode == "logical_AND":
-                    search_fields = request.form.getlist('search_fields')  # Отримуємо список полів
-                    search_values = request.form.getlist('search_values')  # Отримуємо список значень
+                    search_fields = request.form.getlist('search_field')  # Отримуємо список полів
+                    search_values = request.form.getlist('search_value')  # Отримуємо список значень
 
                     conditions = [
                         getattr(model, field).like(f"%{value}%")
