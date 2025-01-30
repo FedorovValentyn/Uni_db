@@ -1,10 +1,10 @@
 ﻿{% extends "base.html" %}
-{% block title %}Full-text Search{% endblock %}
+{% block title %}Повнотекстовий пошук{% endblock %}
 {% block content %}
-    <h2>Full-text Search</h2>
-    <form method="POST">
-        <label for="table">Select Table:</label>
-        <select name="table" required>
+    <h2>Повнотекстовий пошук</h2>
+    <form method="POST" id="search-form">
+        <label for="table">Виберіть таблицю:</label>
+        <select name="table" id="table" required>
             <option value="Person">Person</option>
             <option value="Products">Products</option>
             <option value="PriceList">PriceList</option>
@@ -12,32 +12,132 @@
             <option value="Realization">Realization</option>
             <option value="Types">Types</option>
         </select>
-        
-        <label for="search_field">Search Field:</label>
-        <input type="text" name="search_field" required>
 
-        <label for="search_value">Enter Search Value:</label>
+        <label for="search_field">Поле для пошуку:</label>
+        <select name="search_field" id="search_field" required></select>
+
+        <label for="search_value">Значення для пошуку:</label>
         <input type="text" name="search_value" required>
 
-        <button type="submit">Search</button>
+        <label for="search_mode">Режим пошуку:</label>
+        <select name="search_mode" id="search_mode">
+            <option value="normal">Звичайний</option>
+            <option value="logical_OR">Logical_OR</option>
+            <option value="logical_AND">Logical_AND</option>
+            <option value="extended">Розширений</option>
+        </select>
+
+        <div id="logical-and-conditions" style="display: none;">
+            <h4>Додаткові умови для AND:</h4>
+            <div id="conditions-container"></div>
+            <button type="button" id="add-condition">Додати умову</button>
+        </div>
+
+        <button type="submit">Шукати</button>
     </form>
 
+    <hr>
+
+    <h3>Збережені процедури</h3>
+    <form method="POST" action="{{ url_for('execute_procedure') }}">
+        <button type="submit" name="procedure" value="update_statistics">Оновити статистику</button>
+        <button type="submit" name="procedure" value="recalculate_prices">Перерахувати ціни</button>
+        <button type="submit" name="procedure" value="archive_old_data">Архівувати старі дані</button>
+    </form>
+
+    <hr>
+
     {% if results %}
-        <h3>Search Results:</h3>
+        <h3>Результати пошуку:</h3>
         <table border="1">
-            <tr>
-                {% for col in results[0].__table__.columns %}
-                    <th>{{ col.name }}</th>
-                {% endfor %}
-            </tr>
-            {% for row in results %}
+            <thead>
                 <tr>
-                    {% for col in row.__table__.columns %}
-                        <td>{{ getattr(row, col.name) }}</td>
+                    {% for column in results[0].__table__.columns %}
+                        <th>{{ column.name }}</th>
                     {% endfor %}
                 </tr>
-            {% endfor %}
+            </thead>
+            <tbody>
+                {% for row in results %}
+                    <tr>
+                        {% for column in row.__table__.columns %}
+                            <td>{{ getattr(row, column.name) }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
+    {% elif results is not none %}
+        <p>Нічого не знайдено.</p>
     {% endif %}
-    <a href="{{ url_for('index') }}" class="navigation-btn">Back to Tables</a>
+
+    <a href="{{ url_for('index') }}" class="navigation-btn">Назад до таблиць</a>
+
+    <script>
+        const tableFields = {
+            "Person": ["id", "name", "age", "job"],
+            "Products": ["id", "prod_name"],
+            "PriceList": ["id", "price_list_id_prod", "price_list_id_type", "price_list_price"],
+            "Production": ["production_id", "production_price_list_id", "production_date", "id"],
+            "Realization": ["id", "realization_name", "realization_surname", "realization_middle_name"],
+            "Types": ["id", "type_name"]
+        };
+
+        document.getElementById("table").addEventListener("change", function () {
+            updateFields();
+        });
+
+        document.getElementById("search_mode").addEventListener("change", function () {
+            const mode = this.value;
+            document.getElementById("logical-and-conditions").style.display = mode === "logical_AND" ? "block" : "none";
+        });
+
+        document.getElementById("add-condition").addEventListener("click", function () {
+            addCondition();
+        });
+
+        function updateFields() {
+            const table = document.getElementById("table").value;
+            const fieldSelect = document.getElementById("search_field");
+            fieldSelect.innerHTML = "";
+            tableFields[table].forEach(field => {
+                const option = document.createElement("option");
+                option.value = field;
+                option.textContent = field;
+                fieldSelect.appendChild(option);
+            });
+
+            // Оновлення випадаючих списків в логічному AND
+            document.querySelectorAll(".condition-field").forEach(select => {
+                select.innerHTML = fieldSelect.innerHTML;
+            });
+        }
+
+        function addCondition() {
+            const container = document.getElementById("conditions-container");
+            const conditionDiv = document.createElement("div");
+            conditionDiv.classList.add("condition");
+
+            const fieldSelect = document.createElement("select");
+            fieldSelect.classList.add("condition-field");
+            tableFields[document.getElementById("table").value].forEach(field => {
+                const option = document.createElement("option");
+                option.value = field;
+                option.textContent = field;
+                fieldSelect.appendChild(option);
+            });
+
+            const valueInput = document.createElement("input");
+            valueInput.type = "text";
+            valueInput.name = "condition_values[]";
+            valueInput.placeholder = "Введіть значення";
+
+            conditionDiv.appendChild(fieldSelect);
+            conditionDiv.appendChild(valueInput);
+            container.appendChild(conditionDiv);
+        }
+
+        updateFields();  // Оновлення списку при завантаженні
+    </script>
+
 {% endblock %}

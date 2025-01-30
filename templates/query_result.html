@@ -2,13 +2,72 @@
 {% block title %}Query Results{% endblock %}
 {% block content %}
     <h2>Query Results</h2>
-    <table border="1">
-        {% for row in result %}
-            <tr>
-                {% for item in row %}
-                    <td>{{ item }}</td>
+
+    {% if result %}
+        <table>
+            <thead>
+                <tr>
+                    {% for col in result[0].keys() %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in result %}
+                    <tr>
+                        {% for item in row.values() %}
+                            <td>{{ item }}</td>
+                        {% endfor %}
+                    </tr>
                 {% endfor %}
-            </tr>
-        {% endfor %}
-    </table>
+            </tbody>
+        </table>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="{{ url_for('index') }}">Back</a>
+    </div>
+
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: #fff;
+            border-radius: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .back-link a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+
 {% endblock %}

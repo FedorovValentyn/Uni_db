@@ -1,0 +1,14 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<h2>Результати виконання процедури</h2>
+
+{% if success %}
+    <p style="color: green;">Процедура виконана успішно!</p>
+{% else %}
+    <p style="color: red;">Помилка: {{ error_message }}</p>
+{% endif %}
+
+<a href="{{ url_for('search') }}">Повернутись до пошуку</a>
+
+{% endblock %}

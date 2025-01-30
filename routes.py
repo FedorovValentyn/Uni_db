@@ -1,7 +1,7 @@
 ﻿from flask import Flask, render_template, request, redirect, url_for, flash, session
 from models import db, Person, PriceList, Products, Realization, Production, Types, User
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import text
+from sqlalchemy import text, or_, and_
 
 def validate_field(column_name, value):
     """Validate field values based on column types."""
@@ -175,61 +175,85 @@ def register_routes(app, db):
 
     @app.route('/search', methods=['GET', 'POST'])
     def search():
-        """Full-text search across tables"""
+        """Розширений пошук по таблицях із підтримкою режимів."""
         if 'username' not in session:
             return redirect(url_for('login'))
 
         results = None
-        query = ""
+        query_str = ""
+        mode = "normal"  # Тип пошуку (за замовчуванням - нормальний)
 
         if request.method == 'POST':
             table_name = request.form.get('table')
             search_field = request.form.get('search_field')
-            search_value = sanitize_input(request.form.get('search_value'))
+            search_value = request.form.get('search_value')
+            mode = request.form.get('search_mode')  # Отримання режиму пошуку
 
-            models = {
-                'Person': Person,
-                'Products': Products,
-                'Realization': Realization,
-                'Production': Production,
-                'Types': Types,
-                'PriceList': PriceList
-            }
-
+            models = {'Person': Person, 'Products': Products, 'Realization': Realization, 'Production': Production,
+                      'Types': Types, 'PriceList': PriceList}
             model = models.get(table_name)
+
             if not model:
-                flash("Invalid table selected.", "error")
+                flash("Невірна таблиця.", "error")
                 return redirect(url_for('search'))
 
             try:
-                query = model.query.filter(getattr(model, search_field).like(f"%{search_value}%"))
-                results = query.all()
+                if mode == "normal":
+                    query_str = model.query.filter(getattr(model, search_field).like(f"%{search_value}%"))
+                elif mode == "logical_OR":
+                    search_terms = search_value.split()
+                    conditions = [getattr(model, search_field).like({term}) for term in search_terms]
+                    query_str = model.query.filter(or_(*conditions))  # Використовуємо OR між словами
+                elif mode == "logical_AND":
+                    search_fields = request.form.getlist('search_fields')  # Список полів
+                    search_values = request.form.getlist('search_values')  # Список значень
+
+                    if len(search_fields) != len(search_values):
+                        flash("Mismatch between fields and values.", "error")
+                        return redirect(url_for('search'))
+
+                    conditions = [
+                        getattr(model, field).like(f"%{sanitize_input(value)}%")
+                        for field, value in zip(search_fields, search_values)
+                    ]
+
+                    query_str = model.query.filter(and_(*conditions))  # AND між різними полями
+                elif mode == "extended":
+                    fields = [col.name for col in model.__table__.columns]
+                    query_str = model.query.filter(
+                        db.or_(*[getattr(model, field).like(f"%{search_value}%") for field in fields])
+                    )
+
+                results = query_str.all()
             except Exception as e:
-                flash(f"Search error: {e}", "error")
+                flash(f"Помилка пошуку: {e}", "error")
 
-        return render_template('search.html', results=results, query=query, getattr=getattr)
+        stored_procedures = ['update_statistics', 'recalculate_prices', 'archive_old_data']  # Доступні процедури
+        return render_template('search.html', results=results, query=query_str, stored_procedures=stored_procedures,
+                               mode=mode, getattr=getattr)
 
-    @app.route('/execute_query', methods=['POST'])
-    def execute_query():
-        """Secure execution of custom queries"""
+
+    def execute_stored_procedure(proc_name, params=None):
+        """Виконання збереженої процедури."""
+        try:
+            with db.session.begin():
+                result = db.session.execute(text(f"CALL {proc_name}(:params)"), {'params': params}).fetchall()
+            return result
+        except Exception as e:
+            flash(f'Помилка виконання процедури {proc_name}: {e}', 'error')
+            return None
+
+
+    @app.route('/execute_procedure', methods=['POST'])
+    def execute_procedure():
+        """Обробник виклику збережених процедур."""
         if 'username' not in session:
             return redirect(url_for('login'))
 
-        allowed_queries = {
-            "count_users": "SELECT COUNT(*) FROM user",
-            "list_products": "SELECT name, price FROM products LIMIT 10"
-        }
+        proc_name = request.form.get('procedure_name')
+        param_value = request.form.get('procedure_param')
+        results = execute_stored_procedure(proc_name, param_value)
+        return render_template('procedure_results.html', results=results)
 
-        query_key = request.form.get("query_key")
 
-        if query_key not in allowed_queries:
-            flash("Unauthorized query request.", "error")
-            return redirect(url_for("index"))
 
-        try:
-            result = db.session.execute(text(allowed_queries[query_key])).fetchall()
-            return render_template("query_results.html", result=result, getattr=getattr)
-
-        except Exception as e:
-            flash(f"Query execution error: {e}", "error")
-            return redirect(url_for("index"))
