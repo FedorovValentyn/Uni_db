@@ -24,19 +24,21 @@ def register_routes(app, db):
             return render_template('index.html', tables=tables)
         return redirect(url_for('login'))
 
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-            user = User.query.filter_by(username=username).first()
-            if user and check_password_hash(user.password, password):
-                session['username'] = user.username
-                flash('Logged in successfully!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Invalid username or password', 'error')
-        return render_template('login.html')
+    import pymysql
+
+    ADMIN_USER = "root"
+    ADMIN_PASSWORD = "Valik25122005!"
+    DB_HOST = "127.0.0.1"
+    DB_NAME = "flask_db"
+
+    # Функція для підключення до БД як адміністратор
+    def get_admin_connection():
+        return pymysql.connect(
+            host=DB_HOST,
+            user=ADMIN_USER,
+            password=ADMIN_PASSWORD,
+            database=DB_NAME
+        )
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
@@ -50,17 +52,80 @@ def register_routes(app, db):
                 flash('Passwords do not match', 'error')
                 return redirect(url_for('register'))
 
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                flash('Username is already taken', 'error')
-                return redirect(url_for('register'))
-            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-            new_user = User(username=username, email=email, password=hashed_password)
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Registered successfully! Please login.', 'success')
-            return redirect(url_for('login'))
+            admin_conn = None
+            try:
+                # Підключення до MySQL як адміністратор
+                admin_conn = get_admin_connection()
+                with admin_conn.cursor() as cursor:
+                    # Перевірка, чи email вже існує
+                    cursor.execute("SELECT id FROM User WHERE email = %s", (email,))
+                    if cursor.fetchone():
+                        flash('Email already registered', 'error')
+                        return redirect(url_for('register'))
+
+                    # Створення користувача у MySQL
+                    cursor.execute(f"CREATE USER '{username}'@'%' IDENTIFIED BY '{password}';")
+                    cursor.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {DB_NAME}.* TO '{username}'@'%';")
+
+                    # Хешування паролю для збереження у таблиці User
+                    hashed_password = generate_password_hash(password)
+
+                    # Додавання користувача у таблицю User
+                    cursor.execute("INSERT INTO User (username, email, password) VALUES (%s, %s, %s)",
+                                   (username, email, hashed_password))
+                    admin_conn.commit()
+
+                flash('User registered successfully! You can now log in.', 'success')
+                return redirect(url_for('login'))
+
+            except pymysql.MySQLError as e:
+                flash(f'Error creating MySQL user: {e}', 'error')
+
+            finally:
+                if admin_conn:
+                    admin_conn.close()
+
         return render_template('register.html')
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'POST':
+            username = request.form['username']
+            password = request.form['password']
+
+            admin_conn = None
+            try:
+                # Перевірка пароля у таблиці User
+                admin_conn = get_admin_connection()
+                with admin_conn.cursor() as cursor:
+                    cursor.execute("SELECT password FROM User WHERE username = %s", (username,))
+                    user_data = cursor.fetchone()
+
+                    if not user_data or not check_password_hash(user_data[0], password):
+                        flash('Invalid username or password', 'error')
+                        return redirect(url_for('login'))
+
+                # Якщо пароль правильний, підключаємося до MySQL як користувач
+                user_conn = pymysql.connect(
+                    host=DB_HOST,
+                    user=username,
+                    password=password,
+                    database=DB_NAME
+                )
+                user_conn.close()
+
+                session['username'] = username
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('index'))
+
+            except pymysql.MySQLError:
+                flash('Invalid username or password', 'error')
+
+            finally:
+                if admin_conn:
+                    admin_conn.close()
+
+        return render_template('login.html')
 
     @app.route('/logout')
     def logout():
