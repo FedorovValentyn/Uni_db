@@ -1,0 +1,38 @@
+﻿<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+<form method="POST" action="{{ url_for('procedures') }}">
+    <label for="query_type">Виберіть тип процедури:</label>
+    <select name="query_type" id="query_type" onchange="updateProcedures()" required>
+        <option value="without_params">Без параметрів</option>
+        <option value="with_params">З параметрами</option>
+    </select>
+
+    <label for="procedure">Виберіть процедуру:</label>
+    <select name="procedure" id="procedure" required>
+        <!-- Ці опції оновлюються динамічно через JS -->
+    </select>
+
+    <button type="submit" class="table-btn">Виконати</button>
+</form>
+    <a href="{{url_for('search')}}" type="submit" class="navigation-btn" >Back</a>
+
+<script>
+    const proceduresWithParams = {{ procedures_with_params|tojson }};
+    const proceduresWithoutParams = {{ procedures_without_params|tojson }};
+
+    function updateProcedures() {
+        const type = document.getElementById("query_type").value;
+        const procedureSelect = document.getElementById("procedure");
+        procedureSelect.innerHTML = "";
+
+        const procedures = type === "with_params" ? proceduresWithParams : proceduresWithoutParams;
+        procedures.forEach(proc => {
+            const option = document.createElement("option");
+            option.value = proc;
+            option.textContent = proc;
+            procedureSelect.appendChild(option);
+        });
+    }
+
+    updateProcedures();
+</script>

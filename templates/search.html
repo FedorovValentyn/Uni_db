@@ -54,21 +54,7 @@
 
     <hr>
 
-    <h3>Execute Stored Procedure</h3>
-    <form method="POST" action="{{ url_for('execute_procedure') }}">
-        <label for="procedure">Select Procedure:</label>
-        <select name="procedure" id="procedure" required>
-            <option value="average_proc">Average_proc</option>
-            <option value="last_days_proc">Last_day_proc</option>
-        </select>
-
-        <label for="procedure_param">Parameter:</label>
-        <input type="text" name="procedure_param" id="procedure_param">
-
-        <button type="submit" class="table-btn">Execute</button>
-    </form>
-
-    <hr>
+    <a href="{{ url_for('procedures') }}" class="go-to-proc-btn">Go to Procedures</a>
 
     {% if results %}
         <h3>Search Results:</h3>
@@ -158,13 +144,12 @@
             const valueInput = document.createElement("input");
             valueInput.type = "text";
             valueInput.name = "search_value";
-            valueInput.placeholder = "Введіть значення";
+            valueInput.placeholder = "Enter Value";
 
             conditionDiv.appendChild(fieldSelect);
             conditionDiv.appendChild(valueInput);
             container.appendChild(conditionDiv);
         }
-
 
         function addOrCondition() {
             const container = document.getElementById("or-conditions-container");
@@ -184,13 +169,12 @@
             const valueInput = document.createElement("input");
             valueInput.type = "text";
             valueInput.name = "search_value";
-            valueInput.placeholder = "Введіть значення";
+            valueInput.placeholder = "Enter Value";
 
             conditionDiv.appendChild(fieldSelect);
             conditionDiv.appendChild(valueInput);
             container.appendChild(conditionDiv);
         }
-
 
         updateFields();
     </script>

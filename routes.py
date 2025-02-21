@@ -290,8 +290,8 @@ def register_routes(app, db):
             except Exception as e:
                 flash(f"Помилка пошуку: {e}", "error")
 
-        stored_procedures = ['update_statistics', 'recalculate_prices', 'archive_old_data']
-        return render_template('search.html', results=results, query=query_str, stored_procedures=stored_procedures,
+        # stored_proceduresred_procedures = ['update_statistics', 'recalculate_prices', 'archive_old_data']
+        return render_template('search.html', results=results, query=query_str,
                                mode=mode, getattr=getattr)
 
 
@@ -320,6 +320,76 @@ def register_routes(app, db):
             flash(f'Error of executing procedures {proc_name}: {e}', 'error')
             return redirect(url_for('search'))
 
+    @app.route('/procedures', methods=['GET', 'POST'])
+    def procedures():
+        procedures_with_params = ['empty_proc', 'last_days_proc', 'products_proc', 'quantity_proc', 'workers_proc']
+        procedures_without_params = ['average_proc']
+
+        if request.method == 'POST':
+            procedure_type = request.form.get('query_type')
+            procedure_name = request.form.get('procedure')
+
+            if procedure_type == 'without_params':
+                try:
+                    with db.session.begin():
+                        result = db.session.execute(text(f"CALL {procedure_name}()"))
+                        rows = result.fetchall()
+                        columns = result.keys() if rows else []
+
+                    return render_template('procedure_results.html', results=rows, columns=columns)
+                except Exception as e:
+                    flash(f'Error executing procedure {procedure_name}: {e}', 'error')
+            else:
+                return redirect(url_for('procedure_params', procedure_name=procedure_name))
+
+        return render_template(
+            'procedures.html',
+            procedures_with_params=procedures_with_params,
+            procedures_without_params=procedures_without_params
+        )
+
+        return render_template(
+            'procedures.html',
+            procedures_with_params=procedures_with_params,
+            procedures_without_params=procedures_without_params
+        )
+
+    @app.route('/procedure_params/<procedure_name>', methods=['GET', 'POST'])
+    def procedure_params(procedure_name):
+        # Кількість параметрів для кожної процедури
+        procedures_params_count = {
+            'empty_proc': 2,
+            'products_proc': 2,
+            'quantity_proc': 2,
+            'workers_proc': 3
+        }
+
+        # Отримуємо кількість параметрів для процедури або 0, якщо процедура не в списку
+        param_count = procedures_params_count.get(procedure_name, 1)
+
+        if request.method == 'POST':
+            # Формуємо словник параметрів із введених даних
+            params = {f'param{i + 1}': request.form.get(f'param{i + 1}') for i in range(param_count)}
+
+            try:
+                # Виконуємо збережену процедуру
+                with db.session.begin():
+                    result = db.session.execute(
+                        text(f"CALL {procedure_name}({', '.join([f':param{i + 1}' for i in range(param_count)])})"),
+                        params
+                    )
+                    rows = result.fetchall()
+                    columns = result.keys() if rows else []
+
+                # Рендеримо результати у шаблоні procedure_results.html
+                return render_template('procedure_results.html', results=rows, columns=columns)
+
+            except Exception as e:
+                flash(f'Error executing procedure {procedure_name}: {e}', 'error')
+                return redirect(url_for('procedures'))
+
+        # Передаємо кількість параметрів у шаблон procedure_params.html
+        return render_template('procedure_params.html', procedure_name=procedure_name, param_count=param_count)
 
 
 

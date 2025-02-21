@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+{% block title %}Procedure Parameters{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+{% block content %}
+    <h2>Enter Parameters for {{ procedure_name }}</h2>
+
+    <form method="POST">
+        {% for i in range(param_count) %}
+            <div>
+                <label for="param{{ i+1 }}">Parameter {{ i+1 }}:</label>
+                <input type="text" name="param{{ i+1 }}" id="param{{ i+1 }}" required>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Execute</button>
+    </form>
+
+    <a href="{{ url_for('procedures') }}" class="navigation-btn">Back</a>
+{% endblock %}
