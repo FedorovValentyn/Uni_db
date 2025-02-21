@@ -360,36 +360,51 @@ def register_routes(app, db):
         procedures_params_count = {
             'empty_proc': 2,
             'products_proc': 2,
-            'quantity_proc': 2,
+            'quantity_proc': 2,  # Параметри: start_date, end_date
             'workers_proc': 3
         }
 
-        # Отримуємо кількість параметрів для процедури або 0, якщо процедура не в списку
-        param_count = procedures_params_count.get(procedure_name, 1)
+        param_count = procedures_params_count.get(procedure_name, 0)
 
         if request.method == 'POST':
-            # Формуємо словник параметрів із введених даних
-            params = {f'param{i + 1}': request.form.get(f'param{i + 1}') for i in range(param_count)}
+            # Отримуємо значення параметрів із форми
+            start_date = request.form.get('param1')  # Початкова дата
+            end_date = request.form.get('param2')  # Кінцева дата
+
+            # Побудова запиту залежно від введених даних
+            query_params = {}
+            query_str = f"CALL {procedure_name}("
+            if start_date:
+                query_str += ":start_date, "
+                query_params['start_date'] = start_date
+            else:
+                query_str += "NULL, "
+
+            if end_date:
+                query_str += ":end_date"
+                query_params['end_date'] = end_date
+            else:
+                query_str += "NULL"
+
+            query_str += ")"
 
             try:
-                # Виконуємо збережену процедуру
                 with db.session.begin():
-                    result = db.session.execute(
-                        text(f"CALL {procedure_name}({', '.join([f':param{i + 1}' for i in range(param_count)])})"),
-                        params
-                    )
+                    result = db.session.execute(text(query_str), query_params)
                     rows = result.fetchall()
                     columns = result.keys() if rows else []
 
-                # Рендеримо результати у шаблоні procedure_results.html
                 return render_template('procedure_results.html', results=rows, columns=columns)
-
             except Exception as e:
                 flash(f'Error executing procedure {procedure_name}: {e}', 'error')
                 return redirect(url_for('procedures'))
 
-        # Передаємо кількість параметрів у шаблон procedure_params.html
-        return render_template('procedure_params.html', procedure_name=procedure_name, param_count=param_count)
+        return render_template(
+            'procedure_params.html',
+            procedure_name=procedure_name,
+            param_count=param_count
+        )
+
 
 
 

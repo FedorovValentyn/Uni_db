@@ -5,16 +5,46 @@
 {% block content %}
     <h2>Enter Parameters for {{ procedure_name }}</h2>
 
-    <form method="POST">
-        {% for i in range(param_count) %}
+    {% if procedure_name == 'quantity_proc' %}
+        <!-- Форма для quantity_proc -->
+        <form method="POST">
             <div>
-                <label for="param{{ i+1 }}">Parameter {{ i+1 }}:</label>
-                <input type="text" name="param{{ i+1 }}" id="param{{ i+1 }}" required>
-            </div>
-        {% endfor %}
+                <label for="param1">End Date:</label>
+<input type="date" id="param1" name="param1" placeholder="yyyy-mm-dd">
 
-        <button type="submit">Execute</button>
-    </form>
+            </div>
+            <div>
+               <label for="param2">End Date:</label>
+<input type="date" id="param2" name="param2" placeholder="yyyy-mm-dd">
+
+            </div>
+            <button type="submit">Execute</button>
+        </form>
+    {% elif procedure_name == 'products_proc' %}
+        <!-- Форма для products_proc -->
+        <form method="POST">
+            <div>
+                <label for="param1">Product ID:</label>
+                <input type="text" id="param1" name="param1" required>
+            </div>
+            <div>
+                <label for="param2">Category ID:</label>
+                <input type="text" id="param2" name="param2">
+            </div>
+            <button type="submit">Execute</button>
+        </form>
+    {% else %}
+        <!-- Форма за замовчуванням -->
+        <form method="POST">
+            {% for i in range(param_count) %}
+                <div>
+                    <label for="param{{ i+1 }}">Parameter {{ i+1 }}:</label>
+                    <input type="text" name="param{{ i+1 }}" id="param{{ i+1 }}" required>
+                </div>
+            {% endfor %}
+            <button type="submit">Execute</button>
+        </form>
+    {% endif %}
 
     <a href="{{ url_for('procedures') }}" class="navigation-btn">Back</a>
 {% endblock %}
